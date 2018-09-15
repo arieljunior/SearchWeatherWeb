@@ -1,94 +1,13 @@
 import React, { Component } from 'react';
 import './App.css';
 import axios from 'axios';
+import imageCelsius from './images/celsius.svg';
+import imageFahrenheit from './images/fahrenheit.svg';
+
 
 import {CardWeatherToday, CardWeatherNextDays} from '../src/components/cards/cardWeather';
 
 class App extends Component {
-
-  constructor(props) {
-    super(props);
-    this.state = {
-        city:'',
-        today:{
-          temperature: 0,
-          dayWeek: '',
-          text: '',
-          humidity: 0,
-          pressure: 0
-        },
-        tomorrow:{
-          tempHigh: 0,
-          tempLow: 0,
-          dayWeek: '',
-          text: ''
-        },
-        afterTomorrow:{
-          tempHigh: 0,
-          tempLow: 0,
-          dayWeek: '',
-          text: ''
-        }
-    }
-
-    this.handleWeather = this.handleWeather.bind(this);
-  }
-
-  handleWeather(){
-    const url = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22"+this.state.city+"%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
-    
-    axios.get(url)
-      .then(res => {
-        const data = res.data;
-        
-        const date = new Date(data.query.results.channel.item.forecast[0].date);
-        const daysWeek = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
-
-        this.setState({
-          today:{
-            temperature: this.convertTemperature(data.query.results.channel.item.condition.temp, 'celsius'),
-            dayWeek: daysWeek[date.getDay()],
-            text: data.query.results.channel.item.condition.text,
-            humidity: data.query.results.channel.atmosphere.humidity,
-            pressure: data.query.results.channel.atmosphere.pressure
-          },
-          tomorrow:{
-            tempHigh: this.convertTemperature(data.query.results.channel.item.forecast[1].high, 'celsius'),
-            tempLow: this.convertTemperature(data.query.results.channel.item.forecast[1].low, 'celsius'),
-            dayWeek: daysWeek[new Date(data.query.results.channel.item.forecast[1].date).getDay()],
-            text: data.query.results.channel.item.forecast[1].text
-          },
-          afterTomorrow:{
-            tempHigh: this.convertTemperature(data.query.results.channel.item.forecast[2].high, 'celsius'),
-            tempLow: this.convertTemperature(data.query.results.channel.item.forecast[2].low, 'celsius'),
-            dayWeek: daysWeek[new Date(data.query.results.channel.item.forecast[2].date).getDay()],
-            text: data.query.results.channel.item.forecast[2].text
-          }
-      });
-
-      });
-  }
-
-  convertTemperature(valueTemperature, toTemperature){
-
-    const temperature = parseInt(valueTemperature,10);
-    var temperatureReturn = temperature;
-    switch(toTemperature){
-      case 'celsius':
-        //convert to celsius
-        temperatureReturn = parseInt(((temperature -32) * 5 / 9),10) + "ºC";
-        break;
-        case 'fahrenheit':
-        //convert to fahrenheit
-        temperatureReturn = parseInt((temperature * 9 / 5 + 32),10) + "ºF";
-        break;
-      default:
-        //do notthing
-        break;
-    }
-
-    return temperatureReturn;
-  }
 
   render() {
     return (
@@ -99,22 +18,221 @@ class App extends Component {
               <button className="btn btn-secondary btn-lg active" onClick={() => this.handleWeather()} type="button">Pesquisar</button>
             </div>
           </div>
-
-          <div className="col-10">
+          <div className="col col-center">
             <div className="row">
-              <CardWeatherToday dayWeek={this.state.today.dayWeek} temperature={this.state.today.temperature} 
-                                text={this.state.today.text}/>
+              <CardWeatherToday onClickLineTemp={() => this.handleToggleTypeTemperature()} objToday = {this.state.today} typeTempSrc={this.state.typeTempSrc}/>
 
-              <CardWeatherNextDays when="Amanhã" dayWeek={this.state.tomorrow.dayWeek} tempHigh={this.state.tomorrow.tempHigh}
-                                  tempLow={this.state.tomorrow.tempLow} text={this.state.tomorrow.text} />
+              <CardWeatherNextDays onClickLineTemp={() => this.handleToggleTypeTemperature()} when="Amanhã" objData={this.state.tomorrow} typeTempSrc={this.state.typeTempSrc}/>
 
-              <CardWeatherNextDays when="Depois de Amanhã" dayWeek={this.state.afterTomorrow.dayWeek} tempHigh={this.state.afterTomorrow.tempHigh}
-                                  tempLow={this.state.afterTomorrow.tempLow} text={this.state.afterTomorrow.text} />
+              <CardWeatherNextDays onClickLineTemp={() => this.handleToggleTypeTemperature()} when="Depois de Amanhã" objData={this.state.afterTomorrow} typeTempSrc={this.state.typeTempSrc}/>
             </div>
           </div>
           
       </div>
     );
+  }
+
+  constructor(props) {
+    super(props);
+    this.state = {
+        city:'',
+        typeTempSrc: imageCelsius,
+        today:{
+          temperature: '-',
+          dayWeek: '',
+          text: '',
+          humidity: 0,
+          pressure: 0,
+          color:'#f2f2f2'
+        },
+        tomorrow:{
+          tempHigh: '-',
+          tempLow: '-',
+          dayWeek: '',
+          text: '',
+          colorHigh:'#f2f2f2',
+          colorLow:'#f2f2f2'
+        },
+        afterTomorrow:{
+          tempHigh: '-',
+          tempLow: '-',
+          dayWeek: '',
+          text: '',
+          colorHigh:'#f2f2f2',
+          colorLow:'#f2f2f2'
+        }
+    }
+
+    this.handleWeather = this.handleWeather.bind(this);
+    this.getColor = this.getColor.bind(this);
+    this.handleToggleTypeTemperature = this.handleToggleTypeTemperature.bind(this);
+  }
+
+  handleToggleTypeTemperature(){
+    var typeName = 'celsius';
+    var newTypeSrc = imageCelsius
+    if(this.state.typeTempSrc === imageCelsius){
+      typeName = 'fahrenheit';
+      newTypeSrc = imageFahrenheit;
+    }
+
+    if(this.state.city !== ''){
+      const today = {
+        temperature: this.handleConvertTemperature(this.state.today.temperature, typeName),
+        dayWeek: this.state.today.dayWeek,
+        text: this.state.today.text,
+        humidity: this.state.today.humidity,
+        pressure: this.state.today.pressure,
+        color:this.getColor(this.handleConvertTemperature(this.state.today.temperature, typeName), newTypeSrc)
+      }
+  
+      const tomorrow = {
+        tempHigh: this.handleConvertTemperature(this.state.tomorrow.tempHigh, typeName),
+        tempLow: this.handleConvertTemperature(this.state.tomorrow.tempLow, typeName),
+        dayWeek: this.state.tomorrow.dayWeek,
+        text: this.state.tomorrow.text,
+        colorHigh: this.getColor(this.handleConvertTemperature(this.state.tomorrow.tempHigh, typeName), newTypeSrc),
+        colorLow: this.getColor(this.handleConvertTemperature(this.state.tomorrow.tempLow, typeName), newTypeSrc)
+      }
+  
+      const afterTomorrow = {
+        tempHigh: this.handleConvertTemperature(this.state.afterTomorrow.tempHigh, typeName),
+        tempLow: this.handleConvertTemperature(this.state.afterTomorrow.tempLow, typeName),
+        dayWeek: this.state.afterTomorrow.dayWeek,
+        text: this.state.afterTomorrow.text,
+        colorHigh: this.getColor(this.handleConvertTemperature(this.state.afterTomorrow.tempHigh, typeName), newTypeSrc),
+        colorLow: this.getColor(this.handleConvertTemperature(this.state.afterTomorrow.tempLow, typeName), newTypeSrc)
+      }
+      
+  
+  
+      this.setState({
+        typeTempSrc: newTypeSrc,
+        today: today,
+        tomorrow: tomorrow,
+        afterTomorrow: afterTomorrow
+      });
+    }
+
+  }
+
+  handleWeather(){
+    if(this.state.city !== ''){
+
+      const url = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22"+this.state.city+"%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
+    
+      axios.get(url)
+        .then(res => {
+          const data = res.data;
+          if(data.query.results.channel.item === undefined){
+            this.setState({
+              today:{
+                temperature: '',
+                dayWeek: '',
+                text: '',
+                humidity: 0,
+                pressure: 0,
+                color: '#f2f2f2'
+              },
+              tomorrow:{
+                tempHigh: '',
+                tempLow: '',
+                dayWeek: '',
+                text: '',
+                colorHigh: '#f2f2f2',
+                colorLow: '#f2f2f2'
+              },
+              afterTomorrow:{
+                tempHigh: '',
+                tempLow: '',
+                dayWeek: '',
+                text: '',
+                colorHigh: '#f2f2f2',
+                colorLow: '#f2f2f2'
+              }
+            });
+
+          }else{
+            const date = new Date(data.query.results.channel.item.forecast[0].date);
+            const daysWeek = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+    
+            const todayTemp = this.handleConvertTemperature(data.query.results.channel.item.condition.temp, 'celsius');
+            this.setState({
+              today:{
+                temperature: todayTemp,
+                dayWeek: daysWeek[date.getDay()],
+                text: data.query.results.channel.item.condition.text,
+                humidity: data.query.results.channel.atmosphere.humidity,
+                pressure: data.query.results.channel.atmosphere.pressure,
+                color: this.getColor(todayTemp)
+              },
+              tomorrow:{
+                tempHigh: this.handleConvertTemperature(data.query.results.channel.item.forecast[1].high, 'celsius'),
+                tempLow: this.handleConvertTemperature(data.query.results.channel.item.forecast[1].low, 'celsius'),
+                dayWeek: daysWeek[new Date(data.query.results.channel.item.forecast[1].date).getDay()],
+                text: data.query.results.channel.item.forecast[1].text,
+                colorHigh: this.getColor(this.handleConvertTemperature(data.query.results.channel.item.forecast[1].high, 'celsius')),
+                colorLow: this.getColor(this.handleConvertTemperature(data.query.results.channel.item.forecast[1].low, 'celsius'))
+              },
+              afterTomorrow:{
+                tempHigh: this.handleConvertTemperature(data.query.results.channel.item.forecast[2].high, 'celsius'),
+                tempLow: this.handleConvertTemperature(data.query.results.channel.item.forecast[2].low, 'celsius'),
+                dayWeek: daysWeek[new Date(data.query.results.channel.item.forecast[2].date).getDay()],
+                text: data.query.results.channel.item.forecast[2].text,
+                colorHigh: this.getColor(this.handleConvertTemperature(data.query.results.channel.item.forecast[2].high, 'celsius')),
+                colorLow: this.getColor(this.handleConvertTemperature(data.query.results.channel.item.forecast[2].low, 'celsius'))
+              }
+            });
+          }
+  
+        });
+
+    }
+  }
+
+  handleConvertTemperature(valueTemperature, toTemperature){
+
+    const temperature = parseInt(valueTemperature,10);
+    var temperatureReturn = temperature;
+    switch(toTemperature){
+      case 'celsius':
+        //convert to celsius
+        temperatureReturn = parseInt(((temperature -32) * 5 / 9),10);
+        break;
+        case 'fahrenheit':
+        //convert to fahrenheit
+        temperatureReturn = parseInt((temperature * 9 / 5 + 32),10);
+        break;
+      default:
+        //do notthing
+        break;
+    }
+    return temperatureReturn;
+  }
+
+  getColor(temperature, forNewType){
+
+    var tempMin = 15;
+    var tempMax = 35;
+    var colorReturn = '';
+
+    if(forNewType === imageFahrenheit){
+      tempMin = 59;
+      tempMax = 95;
+    }
+
+    if(temperature < tempMin){
+      //color blue
+      colorReturn = '#80bfff';
+    }else if(temperature > tempMax){
+      //color red
+      colorReturn = '#ff8080';
+    }else{
+      //color yellow
+      colorReturn = '#ffffb3';
+    }
+
+    return colorReturn;
   }
 }
 
