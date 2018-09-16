@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import './App.css';
+import './main.css';
 import axios from 'axios';
 import imageCelsius from './images/celsius.svg';
 import imageFahrenheit from './images/fahrenheit.svg';
@@ -11,23 +11,26 @@ class App extends Component {
 
   render() {
     return (
-      <div className="container">
-          <div className="col">
-            <div className='form-inline'>
-              <input type="text" className="form-control form-control-lg" onChange={(e) => this.setState({city: e.target.value})}  placeholder="Cidade ou Estado"/>
-              <button className="btn btn-secondary btn-lg active" onClick={() => this.handleWeather()} type="button">Pesquisar</button>
+      <div>
+        <div className="container">
+            <div className="col">
+              <div className='form-inline'>
+                <input type="text" className="form-control form-control-lg" onChange={(e) => this.setState({newCity: e.target.value})} value={this.state.newCity}  placeholder="Cidade ou Estado"/>
+                <button className="btn btn-secondary btn-lg active" onClick={() => this.handleWeather()} type="button">Pesquisar</button>
+              </div>
             </div>
-          </div>
-          <div className="col col-center">
-            <div className="row">
-              <CardWeatherToday onClickLineTemp={() => this.handleToggleTypeTemperature()} objToday = {this.state.today} typeTempSrc={this.state.typeTempSrc}/>
+            <div className="col" style={{width: '82%', margin: '0 auto'}}>
+              <h1 className="title">{this.state.city}</h1>
+              <div className="row">
+                <CardWeatherToday onClickLineTemp={() => this.handleToggleTypeTemperature()} objToday = {this.state.today} typeTempSrc={this.state.typeTempSrc}/>
 
-              <CardWeatherNextDays onClickLineTemp={() => this.handleToggleTypeTemperature()} when="Amanhã" objData={this.state.tomorrow} typeTempSrc={this.state.typeTempSrc}/>
+                <CardWeatherNextDays onClickLineTemp={() => this.handleToggleTypeTemperature()} when="Amanhã" objData={this.state.tomorrow} typeTempSrc={this.state.typeTempSrc}/>
 
-              <CardWeatherNextDays onClickLineTemp={() => this.handleToggleTypeTemperature()} when="Depois de Amanhã" objData={this.state.afterTomorrow} typeTempSrc={this.state.typeTempSrc}/>
+                <CardWeatherNextDays onClickLineTemp={() => this.handleToggleTypeTemperature()} when="Depois de Amanhã" objData={this.state.afterTomorrow} typeTempSrc={this.state.typeTempSrc}/>
+              </div>
             </div>
-          </div>
-          
+            
+        </div>
       </div>
     );
   }
@@ -36,6 +39,7 @@ class App extends Component {
     super(props);
     this.state = {
         city:'',
+        newCity:'',
         typeTempSrc: imageCelsius,
         today:{
           temperature: '-',
@@ -76,7 +80,7 @@ class App extends Component {
       newTypeSrc = imageFahrenheit;
     }
 
-    if(this.state.city !== ''){
+    if(this.state.newCity !== ''){
       const today = {
         temperature: this.handleConvertTemperature(this.state.today.temperature, typeName),
         dayWeek: this.state.today.dayWeek,
@@ -117,15 +121,17 @@ class App extends Component {
   }
 
   handleWeather(){
-    if(this.state.city !== ''){
+    if(this.state.newCity !== ''){
 
-      const url = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22"+this.state.city+"%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
+      const url = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22"+this.state.newCity+"%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
     
       axios.get(url)
         .then(res => {
           const data = res.data;
-          if(data.query.results.channel.item === undefined){
+          console.log(data);
+          if(data.query.results.channel.item === undefined || data.query.results === null){
             this.setState({
+              city:'"'+ this.state.newCity + '" não encontrado!',
               today:{
                 temperature: '',
                 dayWeek: '',
@@ -158,6 +164,7 @@ class App extends Component {
     
             const todayTemp = this.handleConvertTemperature(data.query.results.channel.item.condition.temp, 'celsius');
             this.setState({
+              city: data.query.results.channel.location.city+' - '+data.query.results.channel.location.region+', '+ data.query.results.channel.location.country,
               today:{
                 temperature: todayTemp,
                 dayWeek: daysWeek[date.getDay()],
