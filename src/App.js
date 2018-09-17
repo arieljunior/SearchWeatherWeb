@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './main.css';
 import axios from 'axios';
+
 import imageCelsius from './images/celsius.svg';
 import imageFahrenheit from './images/fahrenheit.svg';
 
@@ -13,10 +14,10 @@ class App extends Component {
     return (
       <div>
         <div className="container">
-            <div className="col">
+            <div className="inputCity col">
               <div className='form-inline'>
                 <input type="text" className="form-control form-control-lg" onChange={(e) => this.setState({newCity: e.target.value})} value={this.state.newCity}  placeholder="Cidade ou Estado"/>
-                <button className="btn btn-secondary btn-lg active" onClick={() => this.handleWeather()} type="button">Pesquisar</button>
+                <button className="btn btn-primary btn-lg" onClick={() => this.handleWeather()} type="button">Pesquisar</button>
               </div>
             </div>
             <div className="col" style={{width: '82%', margin: '0 auto'}}>
@@ -128,70 +129,115 @@ class App extends Component {
       axios.get(url)
         .then(res => {
           const data = res.data;
-          console.log(data);
-          if(data.query.results.channel.item === undefined || data.query.results === null){
-            this.setState({
-              city:'"'+ this.state.newCity + '" não encontrado!',
-              today:{
-                temperature: '',
-                dayWeek: '',
-                text: '',
-                humidity: 0,
-                pressure: 0,
-                color: '#f2f2f2'
-              },
-              tomorrow:{
-                tempHigh: '',
-                tempLow: '',
-                dayWeek: '',
-                text: '',
-                colorHigh: '#f2f2f2',
-                colorLow: '#f2f2f2'
-              },
-              afterTomorrow:{
-                tempHigh: '',
-                tempLow: '',
-                dayWeek: '',
-                text: '',
-                colorHigh: '#f2f2f2',
-                colorLow: '#f2f2f2'
-              }
-            });
+
+          var city = '"'+ this.state.newCity + '" não encontrado!';
+          var today = {
+            temperature: '',
+            dayWeek: '',
+            text: '',
+            humidity: 0,
+            pressure: 0,
+            color: '#f2f2f2'
+          }
+          var tomorrow ={
+            tempHigh: '',
+            tempLow: '',
+            dayWeek: '',
+            text: '',
+            colorHigh: '#f2f2f2',
+            colorLow: '#f2f2f2'
+          }
+          var afterTomorrow = {
+            tempHigh: '',
+            tempLow: '',
+            dayWeek: '',
+            text: '',
+            colorHigh: '#f2f2f2',
+            colorLow: '#f2f2f2'
+          }
+
+          if(data.query.results === null || data.query.results.channel.item === undefined || data.query.results === null){
+            //do nothing
+            //error data
 
           }else{
+            //data ok!
             const date = new Date(data.query.results.channel.item.forecast[0].date);
             const daysWeek = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
-    
-            const todayTemp = this.handleConvertTemperature(data.query.results.channel.item.condition.temp, 'celsius');
-            this.setState({
-              city: data.query.results.channel.location.city+' - '+data.query.results.channel.location.region+', '+ data.query.results.channel.location.country,
-              today:{
+            city = data.query.results.channel.location.city+' - '+data.query.results.channel.location.region+', '+ data.query.results.channel.location.country
+            
+            var typeTemp = 'celsius';
+            if(this.state.typeTempSrc === imageFahrenheit){
+              //is Fahrenheit
+              today = {
+                temperature: data.query.results.channel.item.condition.temp,
+                dayWeek: daysWeek[date.getDay()],
+                text: data.query.results.channel.item.condition.text,
+                humidity: data.query.results.channel.atmosphere.humidity,
+                pressure: data.query.results.channel.atmosphere.pressure,
+                color: this.getColor(data.query.results.channel.item.condition.temp, this.state.typeTempSrc)
+              }
+
+              tomorrow = {
+                tempHigh: data.query.results.channel.item.forecast[1].high,
+                tempLow: data.query.results.channel.item.forecast[1].low,
+                dayWeek: daysWeek[new Date(data.query.results.channel.item.forecast[1].date).getDay()],
+                text: data.query.results.channel.item.forecast[1].text,
+                colorHigh: this.getColor(data.query.results.channel.item.forecast[1].high, this.state.typeTempSrc),
+                colorLow: this.getColor(data.query.results.channel.item.forecast[1].low, this.state.typeTempSrc)
+              }
+
+              afterTomorrow = {
+                tempHigh: data.query.results.channel.item.forecast[2].high,
+                tempLow: data.query.results.channel.item.forecast[2].low,
+                dayWeek: daysWeek[new Date(data.query.results.channel.item.forecast[2].date).getDay()],
+                text: data.query.results.channel.item.forecast[2].text,
+                colorHigh: this.getColor(data.query.results.channel.item.forecast[2].high,this.state.typeTempSrc),
+                colorLow: this.getColor(data.query.results.channel.item.forecast[2].low, this.state.typeTempSrc)
+              
+              }
+
+            }else{
+              //is Celsius
+              const todayTemp = this.handleConvertTemperature(data.query.results.channel.item.condition.temp, typeTemp);
+              today = {
                 temperature: todayTemp,
                 dayWeek: daysWeek[date.getDay()],
                 text: data.query.results.channel.item.condition.text,
                 humidity: data.query.results.channel.atmosphere.humidity,
                 pressure: data.query.results.channel.atmosphere.pressure,
                 color: this.getColor(todayTemp)
-              },
-              tomorrow:{
-                tempHigh: this.handleConvertTemperature(data.query.results.channel.item.forecast[1].high, 'celsius'),
-                tempLow: this.handleConvertTemperature(data.query.results.channel.item.forecast[1].low, 'celsius'),
+              }
+
+              tomorrow = {
+                tempHigh: this.handleConvertTemperature(data.query.results.channel.item.forecast[1].high, typeTemp),
+                tempLow: this.handleConvertTemperature(data.query.results.channel.item.forecast[1].low, typeTemp),
                 dayWeek: daysWeek[new Date(data.query.results.channel.item.forecast[1].date).getDay()],
                 text: data.query.results.channel.item.forecast[1].text,
-                colorHigh: this.getColor(this.handleConvertTemperature(data.query.results.channel.item.forecast[1].high, 'celsius')),
-                colorLow: this.getColor(this.handleConvertTemperature(data.query.results.channel.item.forecast[1].low, 'celsius'))
-              },
-              afterTomorrow:{
-                tempHigh: this.handleConvertTemperature(data.query.results.channel.item.forecast[2].high, 'celsius'),
-                tempLow: this.handleConvertTemperature(data.query.results.channel.item.forecast[2].low, 'celsius'),
+                colorHigh: this.getColor(this.handleConvertTemperature(data.query.results.channel.item.forecast[1].high, typeTemp)),
+                colorLow: this.getColor(this.handleConvertTemperature(data.query.results.channel.item.forecast[1].low, typeTemp))
+              }
+
+              afterTomorrow = {
+                tempHigh: this.handleConvertTemperature(data.query.results.channel.item.forecast[2].high, typeTemp),
+                tempLow: this.handleConvertTemperature(data.query.results.channel.item.forecast[2].low, typeTemp),
                 dayWeek: daysWeek[new Date(data.query.results.channel.item.forecast[2].date).getDay()],
                 text: data.query.results.channel.item.forecast[2].text,
-                colorHigh: this.getColor(this.handleConvertTemperature(data.query.results.channel.item.forecast[2].high, 'celsius')),
-                colorLow: this.getColor(this.handleConvertTemperature(data.query.results.channel.item.forecast[2].low, 'celsius'))
+                colorHigh: this.getColor(this.handleConvertTemperature(data.query.results.channel.item.forecast[2].high, typeTemp)),
+                colorLow: this.getColor(this.handleConvertTemperature(data.query.results.channel.item.forecast[2].low, typeTemp))
               }
-            });
+            }
+    
+            
           }
-  
+          
+          this.setState({
+            city: city,
+            today: today,
+            tomorrow: tomorrow,
+            afterTomorrow: afterTomorrow
+          });
+
         });
 
     }

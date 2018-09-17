@@ -13,12 +13,12 @@ class CardWeatherToday extends Component {
                     <p className="card-text">{this.props.objToday.text}</p>
                 </div>
                 <ul className="list-group list-group-flush">
-                    <li className="list-group-item" onClick={this.props.onClickLineTemp} style={{backgroundColor: this.props.objToday.color}}>
+                    <li className="list-group-item" onClick={this.props.onClickLineTemp} style={{backgroundColor: this.props.objToday.color, cursor:'pointer'}}>
                         {this.props.objToday.temperature}
                         <img className="img-icon" src={this.props.typeTempSrc} alt="temperatura"/>
                     </li>
                     <li className="list-group-item" style={{backgroundColor: '#f2f2f2', fontSize: '12px'}}>
-                        clique na temperatura para alterar para Fahrnheit
+                        clique na temperatura para alterar para Fahrenheit
                     </li>
                 </ul>
                
@@ -41,11 +41,11 @@ class CardWeatherNextDays extends Component  {
                     <p className="card-text">{this.props.objData.text}</p>
                 </div>
                 <ul className="list-group list-group-flush">
-                    <li className="list-group-item" style={{backgroundColor: this.props.objData.colorHigh}} onClick={this.props.onClickLineTemp}>
+                    <li className="list-group-item" style={{backgroundColor: this.props.objData.colorHigh, cursor:'pointer'}} onClick={this.props.onClickLineTemp}>
                         Máxima {this.props.objData.tempHigh}
                         <img className="img-icon" src={this.props.typeTempSrc} alt="temperatura"/>
                     </li>
-                    <li className="list-group-item" style={{backgroundColor: this.props.objData.colorLow}} onClick={this.props.onClickLineTemp}>
+                    <li className="list-group-item" style={{backgroundColor: this.props.objData.colorLow, cursor:'pointer'}} onClick={this.props.onClickLineTemp}>
                         Mínima {this.props.objData.tempLow}
                         <img className="img-icon" src={this.props.typeTempSrc} alt="temperatura"/>
                     </li>
